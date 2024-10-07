@@ -17,6 +17,9 @@ export const getAllContacts = async ({
   if (filter.isFavourite) {
     contactsQuery.where({ isFavourite: filter.isFavourite });
   }
+  if (filter.userId) {
+    contactsQuery.where('userId').eq(filter.userId);
+  }
   const contacts = await contactsQuery
     .skip(skip)
     .limit(perPage)
@@ -35,25 +38,30 @@ export const getAllContacts = async ({
   };
 };
 
-export const getContactById = (id) => ContactsCollection.findById(id);
+export const getContactById = (id) => ContactsCollection.findOne(id);
 export const createNewContacts = async (payload) => {
   const contacts = await ContactsCollection.create(payload);
   return contacts;
 };
 export const deleteContact = async (id) => {
-  const contact = await ContactsCollection.findOneAndDelete({
-    _id: id,
-  });
+  const contact = await ContactsCollection.findOne(id);
+  if (contact) {
+    await ContactsCollection.deleteOne({ _id: id._id });
+  }
   return contact;
 };
 export const patchContact = async (id, payload, options = {}) => {
-  const rawResult = await ContactsCollection.findOneAndUpdate(
-    {
-      _id: id,
-    },
-    payload,
-    { new: true, includeResultMetadata: true, ...options },
-  );
+  let rawResult = null;
+  const contact = await ContactsCollection.findOne(id);
+  if (contact) {
+    rawResult = await ContactsCollection.findOneAndUpdate(
+      {
+        _id: id,
+      },
+      payload,
+      { new: true, includeResultMetadata: true, ...options },
+    );
+  }
 
   if (!rawResult || !rawResult.value) return null;
   return {
