@@ -1,3 +1,4 @@
+'YTo5cPe2WV1NNhl2';
 import mongoose from 'mongoose';
 import { env } from '../utils/env.js';
 
@@ -11,7 +12,7 @@ export const initMongoConnection = async () => {
     await mongoose.connect(DB_HOST);
     console.log('Mongo connection successfully established!');
   } catch (error) {
-    console.log('Error while setting up mongo connection', error.message);
+    console.log('Mongodb connection error', error.message);
     throw error;
   }
 };
