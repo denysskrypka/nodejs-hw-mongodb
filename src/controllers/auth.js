@@ -1,42 +1,51 @@
+import createHttpError from 'http-errors';
 import {
-  login,
-  refreshSession,
-  register,
+  registerUser,
+  refreshUsersSession,
+  logoutUser,
   requestResetToken,
   resetPassword,
-  signout,
 } from '../services/auth.js';
-const setupSession = (res, session) => {
-  res.cookie('refreshToken', session.refreshToken, {
-    httpOnly: true,
-    expire: new Date(Date.now() + session.refreshTokenValidUntil),
-  });
-
-  res.cookie('sessionId', session._id, {
-    httpOnly: true,
-    expire: new Date(Date.now() + session.refreshTokenValidUntil),
-  });
-};
+import { loginUser } from '../services/auth.js';
+import { THIRTY_DAYS } from '../constants/index.js';
 
 export const registerUserController = async (req, res) => {
-  const newUser = await register(req.body);
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    throw createHttpError(
+      400,
+      'Missing required fields: name, email or password',
+    );
+  }
+
+  const user = await registerUser({ name, email, password });
+
   res.status(201).json({
     status: 201,
     message: 'Successfully registered a user!',
-    data: newUser,
+    data: user,
   });
 };
 
 export const loginUserController = async (req, res) => {
-  const session = await login(req.body);
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    throw createHttpError(400, 'Missing required fields: email or password');
+  }
+
+  const session = await loginUser({ email, password });
+
   res.cookie('refreshToken', session.refreshToken, {
     httpOnly: true,
-    expire: new Date(Date.now() + session.refreshTokenValidUntil),
+    expires: new Date(Date.now() + THIRTY_DAYS),
   });
   res.cookie('sessionId', session._id, {
     httpOnly: true,
-    expire: new Date(Date.now() + session.refreshTokenValidUntil),
+    expires: new Date(Date.now() + THIRTY_DAYS),
   });
+
   res.json({
     status: 200,
     message: 'Successfully logged in an user!',
@@ -46,43 +55,61 @@ export const loginUserController = async (req, res) => {
   });
 };
 
-export const refreshController = async (req, res) => {
-  const { refreshToken, sessionId } = req.cookies;
-  const session = await refreshSession({ sessionId, refreshToken });
-  setupSession(res, session);
-  res.json({
-    status: 200,
-    message: 'Successfully refresh session',
-    data: { accessToken: session.accessToken },
+const setupSession = (res, session) => {
+  res.cookie('refreshToken', session.refreshToken, {
+    httpOnly: true,
+    expires: new Date(Date.now() + THIRTY_DAYS),
+  });
+  res.cookie('sessionId', session._id, {
+    httpOnly: true,
+    expires: new Date(Date.now() + THIRTY_DAYS),
   });
 };
 
-export const signoutController = async (req, res) => {
-  const { sessionId } = req.cookies;
-  console.log(sessionId);
-  if (sessionId) {
-    await signout(sessionId);
+export const refreshUserSessionController = async (req, res) => {
+  const session = await refreshUsersSession({
+    sessionId: req.cookies.sessionId,
+    refreshToken: req.cookies.refreshToken,
+  });
+
+  setupSession(res, session);
+
+  res.json({
+    status: 200,
+    message: 'Successfully refreshed a session!',
+    data: {
+      accessToken: session.accessToken,
+    },
+  });
+};
+
+export const logoutUserController = async (req, res) => {
+  if (req.cookies.sessionId) {
+    await logoutUser(req.cookies.sessionId);
   }
+
   res.clearCookie('sessionId');
   res.clearCookie('refreshToken');
 
   res.status(204).send();
 };
 
-export const requestResetEmailController = async (req, res) => {
+export const resetEmailController = async (req, res) => {
   await requestResetToken(req.body.email);
+
   res.json({
+    message: 'Reset password email was successfully sent!',
     status: 200,
-    message: 'Reset password email has been successfully sent!',
     data: {},
   });
 };
 
 export const resetPasswordController = async (req, res) => {
   await resetPassword(req.body);
+
   res.json({
+    message: 'Password was successfully reset!',
     status: 200,
-    message: 'Password has been successfully reset!',
     data: {},
   });
 };

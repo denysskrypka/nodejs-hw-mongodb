@@ -5,8 +5,8 @@ import { SMTP, TEMPLATES_DIR } from '../constants/index.js';
 import { env } from '../utils/env.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { randomBytes } from 'crypto';
-import UserCollection from '../db/models/User.js';
-import SessionCollection from '../db/models/Session.js';
+import UserCollection from '../db/models/user.js';
+import SessionCollection from '../db/models/session.js';
 import {
   accessTokenLifetime,
   refreshTokenLifetime,
