@@ -1,13 +1,11 @@
-import * as fs from 'node:fs/promises';
+import fs from 'node:fs/promises';
 
-const createDirIfNotExsist = async (path) => {
+export const createDirIfNotExists = async (url) => {
   try {
-    await fs.access(path);
-  } catch (error) {
-    if (error === 'ENOENT') {
-      fs.mkdir(path);
+    await fs.access(url);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      await fs.mkdir(url);
     }
   }
 };
-
-export default createDirIfNotExsist;

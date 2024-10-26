@@ -1,46 +1,40 @@
 import { Router } from 'express';
 import {
-  createNewContactController,
-  deleteContactController,
-  getAllContactsController,
+  getContactsController,
   getContactByIdController,
+  createContactController,
   patchContactController,
+  deleteContactController,
 } from '../controllers/contacts.js';
-import ctrlWrapper from '../utils/ctrlWrapper.js';
-import validateBody from '../utils/validateBody.js';
+import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+import { validateBody } from '../middlewares/validateBody.js';
 import {
-  addContactsSchema,
-  updateContactsSchema,
+  createContactSchema,
+  updateContactSchema,
 } from '../validation/contacts.js';
-import isValidId from '../middlewares/isValidId.js';
-import authenticate from '../middlewares/authenticate.js';
-import upload from '../middlewares/upload.js';
-const contactsRouter = Router();
-contactsRouter.use(authenticate);
+import { isValidId } from '../middlewares/isValidId.js';
+import { authenticate } from '../middlewares/authenticate.js';
+import { upload } from '../middlewares/multer.js';
 
-contactsRouter.get('/', ctrlWrapper(getAllContactsController));
-contactsRouter.get(
-  '/:contactId',
-  isValidId,
-  ctrlWrapper(getContactByIdController),
-);
-contactsRouter.post(
+const router = Router();
+
+router.use(authenticate);
+router.use('/:contactId', isValidId);
+
+router.get('/', ctrlWrapper(getContactsController));
+router.get('/:contactId', ctrlWrapper(getContactByIdController));
+router.post(
   '/',
   upload.single('photo'),
-  validateBody(addContactsSchema),
-  ctrlWrapper(createNewContactController),
+  validateBody(createContactSchema),
+  ctrlWrapper(createContactController),
 );
-contactsRouter.delete(
-  '/:contactId',
-  isValidId,
-  ctrlWrapper(deleteContactController),
-);
-contactsRouter.patch(
+router.patch(
   '/:contactId',
   upload.single('photo'),
-  isValidId,
-  validateBody(updateContactsSchema),
+  validateBody(updateContactSchema),
   ctrlWrapper(patchContactController),
 );
+router.delete('/:contactId', ctrlWrapper(deleteContactController));
 
-export default contactsRouter;
+export default router;

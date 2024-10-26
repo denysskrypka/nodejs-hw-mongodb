@@ -1,13 +1,11 @@
-import { TEMP_UPLOAD_DIR, UPLOAD_DIR } from './constants/index.js';
 import { initMongoConnection } from './db/initMongoConnection.js';
 import { setupServer } from './server.js';
-import createDirIfNotExsist from './utils/createDirIfNotExsist.js';
+import { TEMP_UPLOAD_PATH, UPLOAD_PATH } from './constants/index.js';
+import { createDirIfNotExists } from './utils/createDirIfNotExists.js';
 
-const startApp = async () => {
+(async () => {
   await initMongoConnection();
+  await createDirIfNotExists(TEMP_UPLOAD_PATH);
+  await createDirIfNotExists(UPLOAD_PATH);
   setupServer();
-  await createDirIfNotExsist(TEMP_UPLOAD_DIR);
-  await createDirIfNotExsist(UPLOAD_DIR);
-};
-
-startApp();
+})();
