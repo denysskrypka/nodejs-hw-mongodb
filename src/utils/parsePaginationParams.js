@@ -3,6 +3,7 @@ const parseNumber = (number, defaultValue) => {
   if (!isString) return defaultValue;
 
   const parsedNumber = parseInt(number);
+
   if (Number.isNaN(parsedNumber)) {
     return defaultValue;
   }

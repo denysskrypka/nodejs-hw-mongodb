@@ -3,33 +3,26 @@ import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 import { SORT_ORDER } from '../constants/index.js';
 
 export const getAllContacts = async ({
-  page,
-  perPage,
-  sortOrder = SORT_ORDER.ASC,
-  sortBy = 'name',
-  filter = {},
   userId,
+  page = 1,
+  perPage = 10,
+  sortOrder = SORT_ORDER.ASC,
+  sortBy = '_id',
 }) => {
   const limit = perPage;
   const skip = (page - 1) * perPage;
 
   const contactsQuery = ContactsCollection.find({ userId });
-  if (filter.type) {
-    contactsQuery.where('contactType').equals(filter.type);
-  }
 
-  if (filter.isFavourite !== undefined) {
-    contactsQuery.where('isFavourite').equals(filter.isFavourite);
-  }
+  const contactsCount = await ContactsCollection.find({ userId })
+    .merge(contactsQuery)
+    .countDocuments();
 
-  const [contactsCount, contacts] = await Promise.all([
-    ContactsCollection.find().merge(contactsQuery).countDocuments(),
-    contactsQuery
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sortBy]: sortOrder })
-      .exec(),
-  ]);
+  const contacts = await contactsQuery
+    .skip(skip)
+    .sort({ [sortBy]: sortOrder })
+    .limit(limit)
+    .exec();
 
   const paginationData = calculatePaginationData(contactsCount, perPage, page);
 
@@ -49,27 +42,32 @@ export const createContact = async (payload) => {
   return contact;
 };
 
-export const updateContact = async (
+export const patchContact = async (
   contactId,
-  userId,
   payload,
   options = {},
+  userId,
+  photo,
 ) => {
-  const updatedContact = await ContactsCollection.findOneAndUpdate(
-    { _id: contactId, userId },
+  const rawResult = await ContactsCollection.findOneAndUpdate(
+    {
+      _id: contactId,
+      userId,
+    },
     payload,
     {
       new: true,
       includeResultMetadata: true,
-      ...options,
     },
   );
+  console.log('rawResult:', rawResult);
 
-  if (!updatedContact || !updatedContact.value) return null;
+  if (!rawResult) {
+    return null;
+  }
 
   return {
-    contact: updatedContact.value,
-    isNew: Boolean(updatedContact?.lastErrorObject?.upserted),
+    contact: rawResult,
   };
 };
 
