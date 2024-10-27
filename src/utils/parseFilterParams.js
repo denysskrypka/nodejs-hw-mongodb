@@ -1,15 +1,22 @@
-// const parseBoolean = (favourite) => {
-//   if (favourite !== 'string') return;
-//   if (favourite === false) return false;
-//   if (favourite === true) return true;
-// };
+const parseType = (type) => {
+  return typeof type === 'string' && ['work', 'home', 'personal'].includes(type) ? type : undefined;
+};
 
-// export const parseFilterParams = (query) => {
-//   const { isFavourite } = query;
 
-//   const parsedIsFavourite = parseBoolean(isFavourite);
+const parseIsFavourite = (isFavourite, defaultValue = undefined) => {
+  return typeof isFavourite === 'string' && (isFavourite === 'true' || isFavourite === 'false')
+    ? isFavourite
+    : defaultValue;
+};
 
-//   return {
-//     isFavourite: parsedIsFavourite,
-//   };
-// };
+export const parseFilterParams = (query) => {
+  const { type, isFavourite } = query;
+
+  const parsedType = parseType(type);
+  const parsedIsFavourite = parseIsFavourite(isFavourite);
+
+  return {
+    type: parsedType,
+    isFavourite: parsedIsFavourite,
+  };
+};

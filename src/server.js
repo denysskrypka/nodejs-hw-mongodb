@@ -1,16 +1,15 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import pino from 'pino-http';
 import cors from 'cors';
-import env from './utils/env.js';
+import { env } from './utils/env.js';
+import { PORT_ENV_VAR } from './constants/index.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import router from './routers/index.js';
-import cookieParser from 'cookie-parser';
-import { UPLOAD_DIR } from './constants/index.js';
+import { UPLOAD_PATH } from './constants/index.js';
 
-const PORT = Number(env('PORT', '3000'));
-
-export const startServer = () => {
+export const setupServer = () => {
   const app = express();
 
   app.use(express.json());
@@ -25,13 +24,15 @@ export const startServer = () => {
     }),
   );
 
-  app.use('/uploads', express.static(UPLOAD_DIR));
-
   app.use(router);
+
+  app.use('/uploads', express.static(UPLOAD_PATH));
+
+  app.use('*', notFoundHandler);
 
   app.use(errorHandler);
 
-  app.use('*', notFoundHandler);
+  const PORT = Number(env(PORT_ENV_VAR, '3000'));
 
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
